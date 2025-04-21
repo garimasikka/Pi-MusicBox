@@ -17,7 +17,47 @@
             </button>
         </div>
     </div>
+    
+    <!-- Debugging output -->
+    <div id="debug" style="display: none; position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 10px; font-size: 12px; max-height: 150px; overflow-y: auto; max-width: 80%;">
+        Debug Info:
+    </div>
+    
+    <!-- Important: Load pi-digits.js first -->
     <script src="pi-digits.js"></script>
+    <!-- Then load the main script -->
     <script src="script.js"></script>
+    
+    <!-- Add a debugging helper -->
+    <script>
+        // Helper to show debug info on mobile
+        function debugLog(msg) {
+            console.log(msg);
+            const debug = document.getElementById('debug');
+            debug.style.display = 'block';
+            const line = document.createElement('div');
+            line.textContent = msg;
+            debug.appendChild(line);
+            // Limit number of messages
+            if (debug.children.length > 20) {
+                debug.removeChild(debug.children[1]);
+            }
+        }
+        
+        // Check if scripts loaded correctly
+        window.addEventListener('load', function() {
+            debugLog('Page fully loaded');
+            if (typeof PI_DIGITS === 'undefined') {
+                debugLog('ERROR: PI_DIGITS not defined!');
+            } else {
+                debugLog('PI_DIGITS loaded: ' + PI_DIGITS.length + ' chars');
+            }
+            
+            // Add a click handler to make sure button works
+            document.getElementById('playPauseButton').addEventListener('click', function() {
+                debugLog('Button clicked!');
+            });
+        });
+    </script>
 </body>
 </html>
