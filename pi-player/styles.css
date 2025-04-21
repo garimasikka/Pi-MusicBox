@@ -2,7 +2,7 @@
 body, html {
     height: 100%;
     margin: 0;
-    font-family: 'Arial', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     background-color: #000;
     color: #fff;
     display: flex;
@@ -10,76 +10,106 @@ body, html {
     align-items: center;
     text-align: center;
 }
-  
+
 #app {
+    display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 600px;
+    padding: 20px;
 }
-  
+
 h1 {
     color: #fff;
+    font-weight: 300;
+    letter-spacing: 2px;
+    margin-bottom: 40px;
 }
-  
+
 #piDisplay {
-    font-size: 3em;
-    height: 1.2em;
+    font-size: 3.5em;
+    height: 1.5em;
     overflow: hidden;
-    margin-bottom: 20px;
-    color: #f0f0f0; /* Light grey color for Pi symbol */
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
-  
-  /* Play/Pause button styling */
+
+/* Play/Pause button styling */
+.controls {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
 .icon-button {
-    background: none;
-    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
     color: white;
-    font-size: 2em;
+    font-size: 1.5em;
     cursor: pointer;
     outline: none;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
 }
-  
+
+.icon-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
 .icon-button:active {
-    transform: scale(0.98); /* Slight shrink effect */
+    transform: scale(0.96);
 }
 
-.icon-button:focus {
-    outline: none;
-}
-  
-  /* Pi digit animations */
-@keyframes flash {
-    0%, 100% { opacity: 0; }
-    50% { opacity: 1; }
-}
-  
-.pi-digit {
-    animation: flash 0.4s linear 1;
-}
-  
-
-/* Pi digit animation */
-@keyframes flash {
-    0% { opacity: 0; }
-    50% { opacity: 1; }
-    100% { opacity: 0; }
-  }
-  
-  .pi-digit {
+#playPauseIcon {
+    position: relative;
     display: inline-block;
-    animation-name: flash;
-    animation-duration: 0.4s; /* Matches the note duration */
-    animation-timing-function: linear;
-    animation-iteration-count: 1;
-  }
-  
-  /* Assigning unique colors to each digit class */
-  .pi-digit-0 { color: #fabebe; }
-  .pi-digit-1 { color: #e6194b; }
-  .pi-digit-2 { color: #3cb44b; }
-  .pi-digit-3 { color: #ffe119; }
-  .pi-digit-4 { color: #4363d8; }
-  .pi-digit-5 { color: #f58231; }
-  .pi-digit-6 { color: #911eb4; }
-  .pi-digit-7 { color: #46f0f0; }
-  .pi-digit-8 { color: #f032e6; }
-  .pi-digit-9 { color: #bcf60c; }
-  
+    line-height: 1;
+}
+
+/* Pi digit animations */
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 0; transform: scale(1); }
+}
+
+.pi-digit {
+    display: inline-block;
+    animation: fadeInOut 2s cubic-bezier(0.45, 0.05, 0.55, 0.95) 1;
+    font-weight: 300;
+    text-shadow: 0 0 10px currentColor;
+    font-size: 1.2em;
+    letter-spacing: 1px;
+}
+
+/* Assigning unique colors to each digit class with softer tones */
+.pi-digit-0 { color: rgba(250, 190, 190, 0.9); }
+.pi-digit-1 { color: rgba(230, 25, 75, 0.8); }
+.pi-digit-2 { color: rgba(60, 180, 75, 0.8); }
+.pi-digit-3 { color: rgba(255, 225, 25, 0.8); }
+.pi-digit-4 { color: rgba(67, 99, 216, 0.8); }
+.pi-digit-5 { color: rgba(245, 130, 49, 0.8); }
+.pi-digit-6 { color: rgba(145, 30, 180, 0.8); }
+.pi-digit-7 { color: rgba(70, 240, 240, 0.8); }
+.pi-digit-8 { color: rgba(240, 50, 230, 0.8); }
+.pi-digit-9 { color: rgba(188, 246, 12, 0.8); }
+
+/* Make responsive */
+@media (max-width: 600px) {
+    #piDisplay {
+        font-size: 2.5em;
+    }
+    
+    h1 {
+        font-size: 1.5em;
+    }
+}
