@@ -1,17 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>&pi; Music Player</title>
-<link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>π MusicBox</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
 </head>
 <body>
-<div id="app">
-    <h1>&pi; Music Player</h1>
-    <div id="piDisplay"></div>
-    <button id="playPauseButton" class="icon-button"><span id="playPauseIcon">▶</span></button>
-</div>
-<script src="pi-music.js"></script>
+    <div id="app">
+        <h1>π MusicBox</h1>
+        <div id="piDisplay"></div>
+        <div class="controls">
+            <button id="playPauseButton" class="icon-button">
+                <span id="playPauseIcon">▶</span>
+            </button>
+        </div>
+    </div>
+    <script src="pi-digits.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
