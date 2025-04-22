@@ -6,6 +6,33 @@
     <title>π MusicBox</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        #debug {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            font-size: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+            max-width: 90%;
+            z-index: 1000;
+            font-family: monospace;
+            border: 1px solid #555;
+        }
+        .test-sound {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-family: 'Montserrat', sans-serif;
+        }
+    </style>
 </head>
 <body>
     <div id="app">
@@ -16,10 +43,13 @@
                 <span id="playPauseIcon">▶</span>
             </button>
         </div>
+        
+        <!-- Test Sound Button -->
+        <button id="testSound" class="test-sound">Test Sound</button>
     </div>
     
     <!-- Debugging output -->
-    <div id="debug" style="display: none; position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 10px; font-size: 12px; max-height: 150px; overflow-y: auto; max-width: 80%;">
+    <div id="debug">
         Debug Info:
     </div>
     
@@ -28,35 +58,30 @@
     <!-- Then load the main script -->
     <script src="script.js"></script>
     
-    <!-- Add a debugging helper -->
+    <!-- Add test sound functionality -->
     <script>
-        // Helper to show debug info on mobile
-        function debugLog(msg) {
-            console.log(msg);
-            const debug = document.getElementById('debug');
-            debug.style.display = 'block';
-            const line = document.createElement('div');
-            line.textContent = msg;
-            debug.appendChild(line);
-            // Limit number of messages
-            if (debug.children.length > 20) {
-                debug.removeChild(debug.children[1]);
-            }
-        }
-        
-        // Check if scripts loaded correctly
-        window.addEventListener('load', function() {
-            debugLog('Page fully loaded');
-            if (typeof PI_DIGITS === 'undefined') {
-                debugLog('ERROR: PI_DIGITS not defined!');
-            } else {
-                debugLog('PI_DIGITS loaded: ' + PI_DIGITS.length + ' chars');
-            }
+        document.getElementById('testSound').addEventListener('click', function() {
+            debugLog("Test sound button pressed");
             
-            // Add a click handler to make sure button works
-            document.getElementById('playPauseButton').addEventListener('click', function() {
-                debugLog('Button clicked!');
-            });
+            try {
+                // Create a temporary audio context just for this test
+                const testContext = new (window.AudioContext || window.webkitAudioContext)();
+                debugLog("Test context state: " + testContext.state);
+                
+                // Create oscillator
+                const osc = testContext.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.value = 440;
+                osc.connect(testContext.destination);
+                
+                // Play a short beep
+                osc.start();
+                osc.stop(testContext.currentTime + 0.3);
+                
+                debugLog("Test sound played successfully");
+            } catch (e) {
+                debugLog("Test sound error: " + e.message);
+            }
         });
     </script>
 </body>
