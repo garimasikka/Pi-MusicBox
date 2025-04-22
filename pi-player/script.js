@@ -1,166 +1,174 @@
 // Define constants and variables
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let audioContext = null; // We'll initialize this on first click
 const startFrequency = 261.63; // Middle C frequency
 let isPlaying = false;
 let digitIndex = 0;
-let noteLength = 2000; // 2 seconds per note for a more gentle pace
+let noteLength = 2000; // 2 seconds per note
 
-// Make sure PI_DIGITS exists and is accessible
-if (typeof PI_DIGITS === 'undefined') {
-    console.error("PI_DIGITS variable not found! Check if pi-digits.js is loaded correctly.");
-    // Create fallback digits if file not loaded
-    window.PI_DIGITS = "3.1415926535897932384626433832795028841971693993751";
+// Function to safely initialize audio context on user interaction
+function initAudioContext() {
+    if (audioContext === null) {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            console.log("Audio context initialized:", audioContext.state);
+            return true;
+        } catch (e) {
+            console.error("Failed to create audio context:", e);
+            return false;
+        }
+    }
+    return true;
 }
 
-// Debug logging
-console.log("PI digits loaded:", PI_DIGITS.substring(0, 20) + "... (" + PI_DIGITS.length + " chars)");
-
-// Audio setup with different instrument sounds
-function createEnvelope(gainNode, duration) {
+// Simplified sound function - basic tone
+function playTone(frequency, duration) {
     try {
-        const attackTime = duration * 0.1;
-        const decayTime = duration * 0.2;
-        const releaseTime = duration * 0.7;
+        if (!audioContext) return false;
         
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.7, audioContext.currentTime + attackTime);
-        gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + attackTime + decayTime);
-        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
+        console.log(`Playing tone: ${frequency}Hz`);
+        
+        // Create oscillator
+        const oscillator = audioContext.createOscillator();
+        oscillator.type = 'sine';
+        oscillator.frequency.value = frequency;
+        
+        // Create gain node for volume control
+        const gainNode = audioContext.createGain();
+        gainNode.gain.value = 0.5;
+        
+        // Connect and play
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + duration);
+        
+        return true;
     } catch (e) {
-        console.error("Error in createEnvelope:", e);
-        // Simple fallback if the complex envelope fails
-        gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+        console.error("Error playing tone:", e);
+        return false;
     }
 }
 
 // Function to play a sound based on the Pi digit
 function playDigit(digit) {
-    try {
-        console.log("Playing digit:", digit);
-        
-        // Create audio nodes
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        // Choose oscillator type based on digit
-        const oscillatorTypes = ['sine', 'triangle', 'sine', 'triangle', 'sine'];
-        oscillator.type = oscillatorTypes[digit % oscillatorTypes.length];
-        
-        // Create scale - pentatonic scale for more pleasing sounds
-        const pentatonicScale = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21];
-        const noteIndex = pentatonicScale[digit % pentatonicScale.length]; // Fix: Use modulo to prevent out-of-bounds
-        
-        // Set frequency based on scale note
-        oscillator.frequency.setValueAtTime(
-            startFrequency * Math.pow(2, noteIndex / 12), 
-            audioContext.currentTime
-        );
-        
-        // Apply envelope
-        createEnvelope(gainNode, noteLength / 1000);
-        
-        // Connect nodes
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        // Play sound
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + noteLength / 1000);
-    } catch (e) {
-        console.error("Error playing digit:", e);
-    }
+    // Map digit to note (simple mapping)
+    const noteMap = [
+        261.63, // C4 (0)
+        293.66, // D4 (1)
+        329.63, // E4 (2)
+        349.23, // F4 (3)
+        392.00, // G4 (4)
+        440.00, // A4 (5)
+        493.88, // B4 (6)
+        523.25, // C5 (7)
+        587.33, // D5 (8)
+        659.25  // E5 (9)
+    ];
+    
+    const frequency = noteMap[digit];
+    return playTone(frequency, noteLength / 1000);
 }
 
 // Function to play and display the next Pi digit
 function playNextDigit() {
     if (!isPlaying) return;
     
-    try {
-        const digit = parseInt(PI_DIGITS.charAt(digitIndex), 10);
-        
-        // Skip non-numeric characters (like the decimal point)
-        if (isNaN(digit)) {
-            console.log("Skipping non-numeric character:", PI_DIGITS.charAt(digitIndex));
-            digitIndex = (digitIndex + 1) % PI_DIGITS.length;
-            setTimeout(playNextDigit, 100); // Try again quickly
-            return;
+    // Skip the decimal point
+    if (digitIndex === 1) digitIndex = 2;
+    
+    const digit = parseInt(PI_DIGITS.charAt(digitIndex), 10);
+    
+    if (!isNaN(digit)) {
+        const success = playDigit(digit);
+        if (success) {
+            displayPiDigit(digit);
+        } else {
+            console.error("Failed to play digit");
+            debugLog("Failed to play digit");
         }
-        
-        playDigit(digit);
-        displayPiDigit(PI_DIGITS.charAt(digitIndex));
-        
-        digitIndex = (digitIndex + 1) % PI_DIGITS.length;
-        setTimeout(playNextDigit, noteLength);
-    } catch (e) {
-        console.error("Error in playNextDigit:", e);
-        isPlaying = false;
-        document.getElementById('playPauseIcon').textContent = '▶';
     }
+    
+    digitIndex = (digitIndex + 1) % PI_DIGITS.length;
+    setTimeout(playNextDigit, noteLength);
 }
 
 // Function to display Pi digit on the screen
 function displayPiDigit(digit) {
-    try {
-        const piDisplay = document.getElementById('piDisplay');
-        
-        // Clear previous digits if there are more than 3 showing
-        if (piDisplay.children.length > 2) {
-            piDisplay.removeChild(piDisplay.firstChild);
-        }
-        
-        // Skip non-numeric characters
-        if (isNaN(parseInt(digit, 10))) return;
-        
-        const digitElement = document.createElement('span');
-        digitElement.classList.add('pi-digit', `pi-digit-${digit}`);
-        digitElement.textContent = digit;
-        piDisplay.appendChild(digitElement);
-    } catch (e) {
-        console.error("Error displaying digit:", e);
+    const piDisplay = document.getElementById('piDisplay');
+    
+    // Clear previous digits if there are more than 3
+    if (piDisplay.children.length > 2) {
+        piDisplay.removeChild(piDisplay.firstChild);
     }
+    
+    const digitElement = document.createElement('span');
+    digitElement.classList.add('pi-digit', `pi-digit-${digit}`);
+    digitElement.textContent = digit;
+    piDisplay.appendChild(digitElement);
+    
+    // Log to debug
+    debugLog(`Displayed digit: ${digit}`);
 }
 
 // Event listener for the Play/Pause button
 document.getElementById('playPauseButton').addEventListener('click', function() {
-    try {
-        console.log("Play/Pause button clicked");
-        const playPauseIcon = document.getElementById('playPauseIcon');
+    debugLog("Button clicked!");
+    
+    // Initialize audio context (must happen on user interaction)
+    if (!initAudioContext()) {
+        debugLog("Failed to initialize audio context");
+        return;
+    }
+    
+    // Resume audio context if suspended
+    if (audioContext.state === 'suspended') {
+        debugLog("Resuming audio context...");
+        audioContext.resume().then(() => {
+            debugLog("Audio context resumed");
+        }).catch(err => {
+            debugLog("Error resuming: " + err);
+        });
+    }
+    
+    const playPauseIcon = document.getElementById('playPauseIcon');
+    
+    if (!isPlaying) {
+        debugLog("Starting playback");
+        isPlaying = true;
+        digitIndex = 0; // Start from beginning
+        playNextDigit();
+        playPauseIcon.textContent = '❚❚'; // Pause symbol
         
-        // Always try to resume the audio context first
-        if (audioContext.state === 'suspended') {
-            console.log("Resuming audio context");
-            audioContext.resume().then(() => {
-                console.log("Audio context resumed successfully");
-            }).catch(err => {
-                console.error("Error resuming audio context:", err);
-            });
-        }
-        
-        if (!isPlaying) {
-            console.log("Starting playback");
-            isPlaying = true;
-            playNextDigit();
-            playPauseIcon.textContent = '❚❚'; // Pause symbol
-        } else {
-            console.log("Stopping playback");
-            isPlaying = false;
-            playPauseIcon.textContent = '▶'; // Play symbol
-        }
-    } catch (e) {
-        console.error("Error with play/pause button:", e);
+        // Test sound immediately
+        playTone(440, 0.3); // Play A4 for 300ms as a test
+    } else {
+        debugLog("Stopping playback");
+        isPlaying = false;
+        playPauseIcon.textContent = '▶'; // Play symbol
     }
 });
 
 // Initialize display with pi symbol
 window.addEventListener('DOMContentLoaded', function() {
-    try {
-        console.log("DOM loaded, initializing π MusicBox");
-        const piDisplay = document.getElementById('piDisplay');
-        const piSymbol = document.createElement('span');
-        piSymbol.textContent = 'π';
-        piSymbol.style.opacity = '0.5';
-        piDisplay.appendChild(piSymbol);
-    } catch (e) {
-        console.error("Error initializing display:", e);
-    }
+    const piDisplay = document.getElementById('piDisplay');
+    const piSymbol = document.createElement('span');
+    piSymbol.textContent = 'π';
+    piSymbol.style.opacity = '0.5';
+    piDisplay.appendChild(piSymbol);
+    
+    debugLog("DOM loaded");
 });
+
+// Helper function to show debug info
+function debugLog(msg) {
+    console.log(msg);
+    const debug = document.getElementById('debug');
+    debug.style.display = 'block';
+    const line = document.createElement('div');
+    line.textContent = msg;
+    debug.appendChild(line);
+    // Limit number of messages
+    if (debug.children.length > 20) {
+        debug.removeChild(debug.children[1]);
+    }
+}
