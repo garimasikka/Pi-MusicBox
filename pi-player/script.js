@@ -1,5 +1,5 @@
 // Define constants and variables
-let audioContext = null; // We'll initialize this on first click
+let audioContext = null;
 const noteMap = [
     261.63, // C4 (0)
     293.66, // D4 (1)
@@ -21,17 +21,15 @@ function initAudioContext() {
     if (audioContext === null) {
         try {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            console.log("Audio context initialized:", audioContext.state);
             return true;
         } catch (e) {
-            console.error("Failed to create audio context:", e);
             return false;
         }
     }
     return true;
 }
 
-// Function to play a tone at a specific time
+// Function to play a tone at a specific time with envelope for smoother transitions
 function playToneAtTime(frequency, startTime, duration) {
     if (!audioContext) return false;
     try {
@@ -39,14 +37,22 @@ function playToneAtTime(frequency, startTime, duration) {
         oscillator.type = 'sine';
         oscillator.frequency.value = frequency;
         const gainNode = audioContext.createGain();
-        gainNode.gain.value = 0.5;
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
+
+        const attackTime = 0.05; // 50ms attack
+        const decayTime = 0.05; // 50ms decay
+        const sustainLevel = 0.5;
+
+        gainNode.gain.setValueAtTime(0, startTime);
+        gainNode.gain.linearRampToValueAtTime(sustainLevel, startTime + attackTime);
+        gainNode.gain.setValueAtTime(sustainLevel, startTime + duration - decayTime);
+        gainNode.gain.linearRampToValueAtTime(0, startTime + duration);
+
         oscillator.start(startTime);
         oscillator.stop(startTime + duration);
         return true;
     } catch (e) {
-        console.error("Error playing tone:", e);
         return false;
     }
 }
@@ -66,44 +72,36 @@ function scheduleNotes(startIndex, count) {
             setTimeout(() => displayPiDigit(digit), startTime * 1000);
         }
     }
-    // Schedule the next batch
     setTimeout(() => scheduleNotes((startIndex + count) % PI_DIGITS.length, count), count * noteLength);
 }
 
-// Function to display Pi digit on the screen
+// Function to display Pi digit on the screen (show last 10 digits)
 function displayPiDigit(digit) {
     const piDisplay = document.getElementById('piDisplay');
-    if (piDisplay.children.length > 2) {
-        piDisplay.removeChild(piDisplay.firstChild);
-    }
     const digitElement = document.createElement('span');
     digitElement.classList.add('pi-digit', `pi-digit-${digit}`);
     digitElement.textContent = digit;
     piDisplay.appendChild(digitElement);
-    debugLog(`Displayed digit: ${digit}`);
+    if (piDisplay.children.length > 10) {
+        piDisplay.removeChild(piDisplay.firstChild);
+    }
 }
 
 // Event listener for the Play/Pause button
 document.getElementById('playPauseButton').addEventListener('click', function() {
-    debugLog("Button clicked!");
     if (!initAudioContext()) {
-        debugLog("Failed to initialize audio context");
         return;
     }
     if (audioContext.state === 'suspended') {
-        audioContext.resume().then(() => {
-            debugLog("Audio context resumed");
-        });
+        audioContext.resume();
     }
     const playPauseIcon = document.getElementById('playPauseIcon');
     if (!isPlaying) {
-        debugLog("Starting playback");
         isPlaying = true;
         digitIndex = 0;
-        scheduleNotes(0, 10); // Schedule 10 notes at a time
+        scheduleNotes(0, 10);
         playPauseIcon.textContent = '❚❚';
     } else {
-        debugLog("Stopping playback");
         isPlaying = false;
         playPauseIcon.textContent = '▶';
     }
@@ -116,18 +114,4 @@ window.addEventListener('DOMContentLoaded', function() {
     piSymbol.textContent = 'π';
     piSymbol.style.opacity = '0.5';
     piDisplay.appendChild(piSymbol);
-    debugLog("DOM loaded");
 });
-
-// Helper function to show debug info
-function debugLog(msg) {
-    console.log(msg);
-    const debug = document.getElementById('debug');
-    debug.style.display = 'block';
-    const line = document.createElement('div');
-    line.textContent = msg;
-    debug.appendChild(line);
-    if (debug.children.length > 20) {
-        debug.removeChild(debug.children[1]);
-    }
-}
